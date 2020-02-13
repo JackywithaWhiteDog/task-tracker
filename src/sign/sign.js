@@ -14,7 +14,14 @@ class Sign extends React.Component {
     const status = this.state.statusList.indexOf(action);
     return (
       status !== -1 ?
-        <h1>sign</h1>
+        <main>
+          {
+            status === 0 ?
+            <Link to="/sign/signin">登入</Link>
+            :
+            <Link to="/sign/signup">註冊</Link>  
+          }
+        </main>
         :
         <Route
           component={NotFound}
