@@ -9,35 +9,33 @@ import { NotFound } from './notfound/notfound.js';
 
 import './index.css';
 
-class Main extends React.Component {
-  render() {
-    return (
-      <HashRouter>
-        <Switch>
-          <Route
-            exact
-            path="/"
-            component={Welcome}
-          />
-          <Route
-            exact
-            path="/sign"
-            component={Sign}
-          />
-          <Route
-            exact
-            path="/app"
-            component={App}
-          />
-          <Route
-            exact
-            component={NotFound}
-            status={404}
-          />
-        </Switch>
-      </HashRouter>
-    );
-  }
+const Main = () => {
+  return (
+    <HashRouter>
+      <Switch>
+        <Route
+          exact
+          path="/"
+          component={Welcome}
+        />
+        <Route
+          exact
+          path="/sign"
+          component={Sign}
+        />
+        <Route
+          exact
+          path="/app"
+          component={App}
+        />
+        <Route
+          exact
+          component={NotFound}
+          status={404}
+        />
+      </Switch>
+    </HashRouter>
+  );
 }
 
 // ==========================================================
