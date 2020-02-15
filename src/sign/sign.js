@@ -1,54 +1,43 @@
 import React from 'react';
-import { Route, Link } from 'react-router-dom';
-import { NotFound } from '../notfound/notfound.js';
+import firebase from 'firebase/app'
+import StyledFirebaseAuth from 'react-firebaseui/StyledFirebaseAuth'
+import 'firebase/auth'
 
-function TextInput(props) {
-  return (
-    <div>
-      <label>{props.label}</label><input type="text" />
-    </div>
-  );
-}
+import { insureFirebase } from '../base.js';
 
-function Form(props) {
-  return (
-    <form>
-      {props.isSignup ? <TextInput label='暱稱：' /> : null}
-      <TextInput label='信箱：' />
-      <TextInput label='密碼：' />
-      {props.isSignup ? <TextInput label='確認密碼：' /> : null}
-      <input type='submit' value={props.isSignup ? '註冊' : '登入'} />
-    </form>
-  );
-}
+insureFirebase();
 
 class Sign extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      statusList: ['signup', 'signin'],
+      uiConfig: {
+        signInSuccessUrl: '/#/app/',
+        signInOptions: [
+          firebase.auth.GoogleAuthProvider.PROVIDER_ID,
+          firebase.auth.EmailAuthProvider.PROVIDER_ID
+        ],
+        tosUrl: '/',
+        privacyPolicyUrl: '/',
+        signInFlow: 'popup',
+        callbacks: {
+          'signInSuccessWithAuthResult': (authResult, redirectUrl) => {
+            alert('Success');
+            return true;
+          },
+        }
+      }
     }
   }
 
   render() {
-    const {action} = this.props.match.params;
-    const status = this.state.statusList.indexOf(action);
     return (
-      status !== -1 ?
       <main>
-        <Form isSignup={status === 0} />
-        {
-          status === 0 ?
-          <Link to="/sign/signin">登入</Link>
-          :
-          <Link to="/sign/signup">註冊</Link>  
-        }
+        <StyledFirebaseAuth
+          uiConfig = {this.state.uiConfig}
+          firebaseAuth={firebase.auth()}
+        />
       </main>
-      :
-      <Route
-        component={NotFound}
-        status={404}
-      />
     );
   }
 }
