@@ -1,7 +1,7 @@
 import firebase from 'firebase/app';
 import 'firebase/analytics';
 
-function insureFirebase() {
+const insureFirebase = () => {
   if (firebase.apps.length === 0) {
     const firebaseConfig = {
       apiKey: "AIzaSyBWFPMQ9wjnMSpQ-lzAtAvKKoDqmmUkm_c",
