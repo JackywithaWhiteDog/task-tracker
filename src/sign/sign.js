@@ -7,9 +7,9 @@ import { insureFirebase } from '../base.js';
 
 insureFirebase();
 
-function Sign(props) {
+const Sign = () => {
   const uiConfig = {
-    signInSuccessUrl: '/#/app/',
+    signInSuccessUrl: '/#/app',
     signInOptions: [
       firebase.auth.GoogleAuthProvider.PROVIDER_ID,
       firebase.auth.EmailAuthProvider.PROVIDER_ID
@@ -19,7 +19,7 @@ function Sign(props) {
     signInFlow: 'popup',
     callbacks: {
       'signInSuccessWithAuthResult': (authResult, redirectUrl) => {
-        alert('Success');
+        console.log('Success');
         return true;
       },
     }
