@@ -1,6 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { HashRouter, Switch, Route } from 'react-router-dom'
+import { HashRouter, Switch } from 'react-router-dom';
+
+import { PublicRoute, PrivateRoute } from './route.js';
 
 import { Welcome } from './welcome/welcome.js';
 import { Sign } from './sign/sign.js';
@@ -13,22 +15,25 @@ const Main = () => {
   return (
     <HashRouter>
       <Switch>
-        <Route
+        <PublicRoute
+          restricted={false}
           exact
           path="/"
           component={Welcome}
         />
-        <Route
+        <PublicRoute
+          restricted={true}
           exact
           path="/sign"
           component={Sign}
         />
-        <Route
+        <PrivateRoute
           exact
           path="/app"
           component={App}
         />
-        <Route
+        <PublicRoute
+          restricted={false}
           exact
           component={NotFound}
           status={404}
