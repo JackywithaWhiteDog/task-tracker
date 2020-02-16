@@ -22,7 +22,7 @@ const PublicRoute = ({component: Component, restricted, ...rest}) => {
       {...rest}
       render = {props => (
         isSignin() && restricted ?
-          <Redirect to="/app" />
+          <Redirect to="/app/home" />
           :
           <Component {...props} />
       )}

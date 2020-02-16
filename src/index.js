@@ -29,7 +29,7 @@ const Main = () => {
         />
         <PrivateRoute
           exact
-          path="/app"
+          path="/app/:page"
           component={App}
         />
         <PublicRoute
