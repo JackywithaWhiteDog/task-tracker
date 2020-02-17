@@ -1,5 +1,7 @@
 import React from 'react';
 import { HashRouter, Switch, Link } from 'react-router-dom';
+import firebase from 'firebase/app'
+import 'firebase/auth'
 
 import { PublicRoute, PrivateRoute } from '../route.js';
 
@@ -26,10 +28,17 @@ class Record extends React.Component {
 }
 
 class Setting extends React.Component {
+  signout() {
+    firebase.auth().signOut().then(() => {
+      window.location = '../../'
+    });
+  }
+
   render() {
     return (
       <main>
         <h1>setting</h1>
+        <button onClick={() => this.signout()}>登出</button>
       </main>
     )
   }
