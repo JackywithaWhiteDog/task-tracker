@@ -1,17 +1,66 @@
 import React from 'react';
-import { HashRouter, Switch, Link } from 'react-router-dom';
+import { HashRouter, Route, Switch, Link } from 'react-router-dom';
 import firebase from 'firebase/app'
 import 'firebase/auth'
-
-import { PublicRoute, PrivateRoute } from '../route.js';
+import 'firebase/firestore'
 
 import { NotFound } from '../notfound/notfound.js';
+import { insureFirebase } from '../base.js';
+
+if (!Date.now) {
+  Date.now = function now() {
+    return new Date().getTime();
+  };
+}
+
+insureFirebase();
+
+class Button extends React.Component {
+  render() {
+    return (
+      <button onClick={() => this.props.handleClick()}>{this.props.text}</button>
+    )
+  }
+}
 
 class Home extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      activities: ['讀書', '工作', '拖延', '耍廢', '睡覺'],
+      action: null
+    }
+  }
+
+  start(activity) {
+    this.state.action.add({
+      time: firebase.firestore.FieldValue.serverTimestamp(),
+      action: activity
+    }).then(() => {
+      console.log(activity);
+    })
+  }
+
+  componentDidMount() {
+    const uid = firebase.auth().currentUser.uid;
+    this.setState({
+      action: firebase.firestore().collection('users').doc(uid).collection('actions')
+    });
+  }
+
   render() {
     return (
       <main>
         <h1>home</h1>
+        <section>
+          {this.state.activities.map((item, i) =>
+            <Button
+              key={i}
+              text={item}
+              handleClick={() => this.start(item)}
+            />
+          )}
+        </section>
       </main>
     )
   }
@@ -49,23 +98,22 @@ const App = () => {
     <main>
       <HashRouter>
         <Switch>
-          <PrivateRoute
+          <Route
             exact
             path="/app/home"
             component={Home}
           />
-          <PrivateRoute
+          <Route
             exact
             path="/app/record"
             component={Record}
           />
-          <PrivateRoute
+          <Route
             exact
             path="/app/setting"
             component={Setting}
           />
-          <PublicRoute
-            restricted={false}
+          <Route
             exact
             component={NotFound}
             status={404}
