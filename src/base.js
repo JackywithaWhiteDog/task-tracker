@@ -18,13 +18,4 @@ const insureFirebase = () => {
   }
 }
 
-const getDatabase = () => {
-  insureFirebase();
-  return firebase.database();
-}
-
-const isSignin = () => {
-  return firebase.auth().currentUser != null;
-}
-
-export { insureFirebase, getDatabase, isSignin }
+export { insureFirebase }

@@ -1,6 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { HashRouter, Switch } from 'react-router-dom';
+import { HashRouter, Route, Switch } from 'react-router-dom';
+
+import firebase from 'firebase/app'
 
 import { PublicRoute, PrivateRoute } from './route.js';
 
@@ -10,41 +12,63 @@ import { App } from './app/app.js';
 import { NotFound } from './notfound/notfound.js';
 
 import './index.css';
+import { insureFirebase } from './base.js';
 
-const Main = () => {
-  return (
-    <HashRouter>
-      <Switch>
-        <PublicRoute
-          restricted={false}
-          exact
-          path="/"
-          component={Welcome}
-        />
-        <PublicRoute
-          restricted={true}
-          exact
-          path="/sign"
-          component={Sign}
-        />
-        <PrivateRoute
-          exact
-          path="/app/:page"
-          component={App}
-        />
-        <PublicRoute
-          restricted={false}
-          exact
-          component={NotFound}
-          status={404}
-        />
-      </Switch>
-    </HashRouter>
-  );
+class Main extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      isSignin: false
+    }
+  }
+  
+  componentDidMount() {
+    firebase.auth().onAuthStateChanged((user) => {
+      this.setState({
+        isSignin: user != null
+      })
+    });
+  }
+
+  render() {
+    return (
+      <HashRouter>
+        <Switch>
+          <PublicRoute
+            restricted={false}
+            signin={this.state.isSignin}
+            exact
+            path="/"
+            component={Welcome}
+          />
+          <PublicRoute
+            restricted={true}
+            signin={this.state.isSignin}
+            exact
+            path="/sign"
+            component={Sign}
+          />
+          <PrivateRoute
+            signin={this.state.isSignin}
+            exact
+            path="/app/:page"
+            isSignin={this.state.isSignin}
+            component={App}
+          />
+          <Route
+            exact
+            component={NotFound}
+            status={404}
+          />
+        </Switch>
+      </HashRouter>
+    );
+  }
 }
 
 // ==========================================================
 
+insureFirebase();
 ReactDOM.render(
   <Main />,
   document.getElementById('root')
