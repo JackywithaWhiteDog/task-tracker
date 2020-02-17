@@ -9,7 +9,7 @@ insureFirebase();
 
 const Sign = () => {
   const uiConfig = {
-    signInSuccessUrl: '/#/app',
+    signInSuccessUrl: '/#/app/home',
     signInOptions: [
       firebase.auth.GoogleAuthProvider.PROVIDER_ID,
       firebase.auth.EmailAuthProvider.PROVIDER_ID
@@ -19,7 +19,7 @@ const Sign = () => {
     signInFlow: 'popup',
     callbacks: {
       'signInSuccessWithAuthResult': (authResult, redirectUrl) => {
-        console.log('Success');
+        console.log('signin');
         return true;
       },
     }
