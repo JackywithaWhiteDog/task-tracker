@@ -26,32 +26,36 @@ class Button extends React.Component {
 class Home extends React.Component {
   constructor(props) {
     super(props);
+    const uid = firebase.auth().currentUser.uid;
     this.state = {
       activities: ['讀書', '工作', '拖延', '耍廢', '睡覺'],
-      action: null
+      user: firebase.firestore().collection('users').doc(uid),
+      currentAction: null
     }
   }
 
   start(activity) {
-    this.state.action.add({
+    this.state.user.set({
       time: firebase.firestore.FieldValue.serverTimestamp(),
       action: activity
-    }).then(() => {
+    }, {merge: true}).then(() => {
       console.log(activity);
     })
   }
 
   componentDidMount() {
-    const uid = firebase.auth().currentUser.uid;
-    this.setState({
-      action: firebase.firestore().collection('users').doc(uid).collection('actions')
-    });
+    this.state.user.onSnapshot(docSnapshot => {
+      this.setState({
+        currentAction: docSnapshot.data().action
+      })
+    })
   }
 
   render() {
     return (
       <main>
         <h1>home</h1>
+        <h2>{this.state.currentAction}</h2>
         <section>
           {this.state.activities.map((item, i) =>
             <Button
