@@ -20,6 +20,7 @@ class Main extends React.Component {
     this.state = {
       isSignin: false
     }
+    insureFirebase();
   }
   
   componentDidMount() {
@@ -52,7 +53,6 @@ class Main extends React.Component {
             signin={this.state.isSignin}
             exact
             path="/app/:page"
-            isSignin={this.state.isSignin}
             component={App}
           />
           <Route
@@ -68,7 +68,6 @@ class Main extends React.Component {
 
 // ==========================================================
 
-insureFirebase();
 ReactDOM.render(
   <Main />,
   document.getElementById('root')
