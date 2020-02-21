@@ -31,60 +31,16 @@ class Home extends React.Component {
     }
   }
 
-  start(activity) {
-    // record
-    const now = Date.now();
-    this.props.user.get().then(doc => {
-      if (doc.exists && doc.data().action != null) {
-        const action = doc.data().action;
-        let start = doc.data().start;
-        let d = new Date();
-        d.setHours(0); d.setMinutes(0); d.setSeconds(0); d.setMilliseconds(0);
-        let today = d.getTime();
-        d.setHours(-24);
-        let yesterday = d.getTime();
-        if (start < today) {
-          this.props.user.collection('records').add({
-            timeStamp: firebase.firestore.FieldValue.serverTimestamp(),
-            date: yesterday,
-            start: start,
-            end: today,
-            duration: today-start,
-            action: action
-          })
-          start = today;
-        }
-        this.props.user.collection('records').add({
-          timeStamp: firebase.firestore.FieldValue.serverTimestamp(),
-          date: today,
-          start: start,
-          end: now,
-          duration: now-start,
-          action: action
-        })
-      }
-    });
-
-    this.props.user.set({
-      timeStamp: firebase.firestore.FieldValue.serverTimestamp(),
-      start: now,
-      action: activity
-    }, {merge: true}).then(() => {
-      console.log(activity);
-    })
-  }
-
   render() {
     return (
       <main>
         <h1>home</h1>
-        <h2>{this.props.currentAction}</h2>
         <section>
           {this.state.activities.map((item, i) =>
             <Button
               key={i}
               text={item}
-              handleClick={() => this.start(item)}
+              handleClick={() => this.props.changeAction(item)}
             />
           )}
         </section>
@@ -130,6 +86,54 @@ class App extends React.Component {
     }
   }
 
+  changeAction(newAction) {
+    const now = Date.now();
+    const user = this.state.user;
+    const records = user.collection('records');
+    let action = null;
+
+    // record duration of previous action
+    user.get().then(doc => {
+      if (doc.exists && doc.data().action != null && doc.data().action !== newAction) {
+        let d = new Date();
+        d.setHours(0); d.setMinutes(0); d.setSeconds(0); d.setMilliseconds(0);
+        const today = d.getTime();
+        d.setHours(-24);
+        const yesterday = d.getTime();
+        let start = doc.data().start;
+
+        action = doc.data().action;
+        if (start < today) {
+          records.add({
+            timeStamp: firebase.firestore.FieldValue.serverTimestamp(),
+            date: yesterday,
+            start: start,
+            end: today,
+            duration: today-start,
+            action: action
+          })
+          start = today;
+        }
+        records.add({
+          timeStamp: firebase.firestore.FieldValue.serverTimestamp(),
+          date: today,
+          start: start,
+          end: now,
+          duration: now-start,
+          action: action
+        })
+      }
+    });
+
+    if (action !== newAction) {
+      user.set({
+        timeStamp: firebase.firestore.FieldValue.serverTimestamp(),
+        start: now,
+        action: newAction
+      },{merge: true}) 
+    }
+  }
+
   componentDidMount() {
     this.state.user.onSnapshot(docSnapshot => {
       if (docSnapshot.data() !== undefined) {
@@ -143,12 +147,23 @@ class App extends React.Component {
   render() {
     return (
       <main>
+        <div>
+          <h2>{this.state.currentAction}</h2>
+          <Button
+            text='結束'
+            handleClick={() => this.changeAction(null)}
+          />
+        </div>
         <HashRouter>
           <Switch>
             <Route
               exact
               path="/app/home"
-              render={props => <Home {...props} user={this.state.user} currentAction={this.state.currentAction} />}
+              render={props =>
+              <Home
+                {...props}
+                changeAction={a => this.changeAction(a)}
+              />}
             />
             <Route
               exact
