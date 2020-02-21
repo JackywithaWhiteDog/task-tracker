@@ -23,13 +23,13 @@ const Sign = () => {
         console.log('signin');
         const uid = authResult.user.uid;
         const ref = firebase.firestore().collection('users').doc(uid);
-        console.log(ref);
         ref.get().then(docSnapshot => {
           if (!docSnapshot.exists) {
             let d = new Date();
             d.setHours(0); d.setMinutes(0); d.setSeconds(0); d.setMilliseconds(0);
             ref.set({
-              time: d.getTime(),
+              timeStamp: firebase.firestore.FieldValue.serverTimestamp(),
+              start: d.getTime(),
               action: null,
             },{merge: true});
           }

@@ -26,28 +26,51 @@ class Button extends React.Component {
 class Home extends React.Component {
   constructor(props) {
     super(props);
-    const uid = firebase.auth().currentUser.uid;
     this.state = {
       activities: ['讀書', '工作', '拖延', '耍廢', '睡覺'],
-      user: firebase.firestore().collection('users').doc(uid),
-      currentAction: null
     }
   }
 
   start(activity) {
-    this.state.user.set({
-      time: firebase.firestore.FieldValue.serverTimestamp(),
+    // record
+    const now = Date.now();
+    this.props.user.get().then(doc => {
+      if (doc.exists && doc.data().action != null) {
+        const action = doc.data().action;
+        let start = doc.data().start;
+        let d = new Date();
+        d.setHours(0); d.setMinutes(0); d.setSeconds(0); d.setMilliseconds(0);
+        let today = d.getTime();
+        d.setHours(-24);
+        let yesterday = d.getTime();
+        if (start < today) {
+          this.props.user.collection('records').add({
+            timeStamp: firebase.firestore.FieldValue.serverTimestamp(),
+            date: yesterday,
+            start: start,
+            end: today,
+            duration: today-start,
+            action: action
+          })
+          start = today;
+        }
+        this.props.user.collection('records').add({
+          timeStamp: firebase.firestore.FieldValue.serverTimestamp(),
+          date: today,
+          start: start,
+          end: now,
+          duration: now-start,
+          action: action
+        })
+      }
+    });
+
+    this.props.user.set({
+      timeStamp: firebase.firestore.FieldValue.serverTimestamp(),
+      start: now,
       action: activity
     }, {merge: true}).then(() => {
       console.log(activity);
-    })
-  }
-
-  componentDidMount() {
-    this.state.user.onSnapshot(docSnapshot => {
-      this.setState({
-        currentAction: docSnapshot.data().action
-      })
     })
   }
 
@@ -55,7 +78,7 @@ class Home extends React.Component {
     return (
       <main>
         <h1>home</h1>
-        <h2>{this.state.currentAction}</h2>
+        <h2>{this.props.currentAction}</h2>
         <section>
           {this.state.activities.map((item, i) =>
             <Button
@@ -97,40 +120,61 @@ class Setting extends React.Component {
   }
 }
 
-const App = () => {
-  return (
-    <main>
-      <HashRouter>
-        <Switch>
-          <Route
-            exact
-            path="/app/home"
-            component={Home}
-          />
-          <Route
-            exact
-            path="/app/record"
-            component={Record}
-          />
-          <Route
-            exact
-            path="/app/setting"
-            component={Setting}
-          />
-          <Route
-            exact
-            component={NotFound}
-            status={404}
-          />
-        </Switch>
-      </HashRouter>
-      <nav>
-        <Link to="/app/home">首頁</Link>
-        <Link to="/app/record">紀錄</Link>
-        <Link to="/app/setting">設定</Link>
-      </nav>
-    </main>
-  );
+class App extends React.Component {
+  constructor(props) {
+    super(props);
+    const uid = firebase.auth().currentUser.uid;
+    this.state = {
+      user: firebase.firestore().collection('users').doc(uid),
+      currentAction: null
+    }
+  }
+
+  componentDidMount() {
+    this.state.user.onSnapshot(docSnapshot => {
+      if (docSnapshot.data() !== undefined) {
+        this.setState({
+          currentAction: docSnapshot.data().action
+        })
+      }
+    })
+  }
+
+  render() {
+    return (
+      <main>
+        <HashRouter>
+          <Switch>
+            <Route
+              exact
+              path="/app/home"
+              render={props => <Home {...props} user={this.state.user} currentAction={this.state.currentAction} />}
+            />
+            <Route
+              exact
+              path="/app/record"
+              component={Record}
+            />
+            <Route
+              exact
+              path="/app/setting"
+              component={Setting}
+            />
+            <Route
+              exact
+              component={NotFound}
+              status={404}
+            />
+          </Switch>
+        </HashRouter>
+        <nav>
+          <Link to="/app/home">首頁</Link>
+          <Link to="/app/record">紀錄</Link>
+          <Link to="/app/setting">設定</Link>
+        </nav>
+      </main>
+    );
+  }
 }
 
 export {App}
