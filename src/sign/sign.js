@@ -5,6 +5,7 @@ import 'firebase/auth'
 import 'firebase/firestore'
 
 import { insureFirebase } from '../base.js';
+import { getDay } from '../functions.js';
 
 insureFirebase();
 
@@ -23,10 +24,9 @@ const Sign = () => {
         console.log('signin');
         const uid = authResult.user.uid;
         const ref = firebase.firestore().collection('users').doc(uid);
-        ref.get().then(docSnapshot => {
-          if (!docSnapshot.exists) {
-            let d = new Date();
-            d.setHours(0); d.setMinutes(0); d.setSeconds(0); d.setMilliseconds(0);
+        ref.get().then(doc => {
+          if (!doc.exists) {
+            let d = getDay(new Date());
             ref.set({
               timeStamp: firebase.firestore.FieldValue.serverTimestamp(),
               start: d.getTime(),
