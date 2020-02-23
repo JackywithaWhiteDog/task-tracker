@@ -6,6 +6,7 @@ import 'firebase/firestore'
 
 import { NotFound } from '../notfound/notfound.js';
 import { insureFirebase } from '../base.js';
+import { getDay } from '../functions.js';
 
 if (!Date.now) {
   Date.now = function now() {
@@ -86,6 +87,34 @@ class App extends React.Component {
     }
   }
 
+  record(records, date, duration, action) {
+    const target = records.doc('date');
+    target.get().then(doc => {
+      if (doc.exists) {
+        let durations = doc.data().durations || [];
+        let actions = doc.data().actions || [];
+        let total = doc.data()[action] || 0;
+        durations.push(duration);
+        actions.push(action);
+        total += duration;
+        target.update({
+          timeStamp: firebase.firestore.FieldValue.serverTimestamp(),
+          durations: durations,
+          actions: actions,
+          [action]: total
+        });
+      }
+      else {
+        target.set({
+          timeStamp: firebase.firestore.FieldValue.serverTimestamp(),
+          duractions: [duration],
+          actions: [action],
+          [action]: duration
+        });
+      }
+    })
+  }
+
   changeAction(newAction) {
     const now = Date.now();
     const user = this.state.user;
@@ -94,38 +123,26 @@ class App extends React.Component {
 
     // record duration of previous action
     user.get().then(doc => {
-      if (doc.exists && doc.data().action != null && doc.data().action !== newAction) {
-        let d = new Date();
-        d.setHours(0); d.setMinutes(0); d.setSeconds(0); d.setMilliseconds(0);
-        const today = d.getTime();
-        d.setHours(-24);
-        const yesterday = d.getTime();
+      if (doc.exists && doc.data().action !== newAction) {
+        action = doc.data().action;
         let start = doc.data().start;
 
-        action = doc.data().action;
-        if (start < today) {
-          records.add({
-            timeStamp: firebase.firestore.FieldValue.serverTimestamp(),
-            date: yesterday,
-            start: start,
-            end: today,
-            duration: today-start,
-            action: action
-          })
-          start = today;
+        let d = getDay(new Date());
+        const today = d.getTime();
+        d = getDay(d.setTime(start));
+        let day = d.getTime();
+        
+        while (day < today) {
+          d.setHours(d.getHours()+24);
+          const next = d.getTime();
+          this.record(records, day, next-start, action);
+          start = day = next;
         }
-        records.add({
-          timeStamp: firebase.firestore.FieldValue.serverTimestamp(),
-          date: today,
-          start: start,
-          end: now,
-          duration: now-start,
-          action: action
-        })
+        this.record(records, today, now-start, action);
       }
     });
 
-    if (action !== newAction) {
+    if (action == null || action !== newAction) {
       user.set({
         timeStamp: firebase.firestore.FieldValue.serverTimestamp(),
         start: now,
