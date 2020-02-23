@@ -82,8 +82,8 @@ class App extends React.Component {
     }
   }
 
-  record(records, date, duration, action) {
-    const target = records.doc(String(date));
+  record(date, duration, action) {
+    const target = this.state.user.collection('records').doc(String(date));
     target.get().then(doc => {
       let total = [null, ...this.state.actions].reduce((obj, item) => {obj[item]=0; return obj}, {});
       let times = Object.assign({}, total);
@@ -119,40 +119,68 @@ class App extends React.Component {
     })
   }
 
+  updateRecords() {
+    const user = this.state.user;
+    let d = getDay(new Date());
+    const today = d.getTime();
+    user.get().then(doc => {
+      if (doc.exists) {
+        const action = doc.data().action;
+        let start = doc.data().start;
+        if (start < today) {
+          d.setTime(start);
+          d = getDay(d);
+          let day = d.getTime();
+          while (day < today) {
+            d.setHours(d.getHours()+24);
+            const next = d.getTime();
+            this.record(day, next-start, action);
+            start = day = next;
+          }
+          user.update({
+            start: today
+          })
+        }
+      } else {
+        user.set({
+          timeStamp: firebase.firestore.FieldValue.serverTimestamp(),
+          start: today,
+          action: null,
+        });
+      }
+    })
+  }
+
   changeAction(newAction) {
     const now = Date.now();
     const user = this.state.user;
-    const records = user.collection('records');
-    let action = null;
+    let legal = true;
+
+    this.updateRecords();
 
     // record duration of previous action
     user.get().then(doc => {
-      if (doc.exists && doc.data().action !== newAction) {
-        action = doc.data().action;
-        let start = doc.data().start;
+      if (doc.exists) {
+        const action = doc.data().action;
 
-        let d = getDay(new Date());
-        const today = d.getTime();
-        d.setTime(start);
-        d = getDay(d);
-        let day = d.getTime();
-        
-        while (day < today) {
-          d.setHours(d.getHours()+24);
-          const next = d.getTime();
-          this.record(records, day, next-start, action);
-          start = day = next;
+        legal = action !== newAction;
+
+        if (legal) {
+          const start = doc.data().start;
+
+          const d = getDay(new Date());
+          const today = d.getTime();
+          this.record(today, now-start, action);
         }
-        this.record(records, today, now-start, action);
       }
     });
 
-    if (action == null || action !== newAction) {
-      user.set({
+    if (legal) {
+      user.update({
         timeStamp: firebase.firestore.FieldValue.serverTimestamp(),
         start: now,
         action: newAction
-      },{merge: true}) 
+      }) 
     }
   }
 
