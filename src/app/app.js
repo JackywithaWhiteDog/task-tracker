@@ -25,19 +25,13 @@ class Button extends React.Component {
 }
 
 class Home extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      activities: ['讀書', '工作', '拖延', '耍廢', '睡覺'],
-    }
-  }
 
   render() {
     return (
       <main>
         <h1>home</h1>
         <section>
-          {this.state.activities.map((item, i) =>
+          {this.props.actions.map((item, i) =>
             <Button
               key={i}
               text={item}
@@ -83,33 +77,43 @@ class App extends React.Component {
     const uid = firebase.auth().currentUser.uid;
     this.state = {
       user: firebase.firestore().collection('users').doc(uid),
-      currentAction: null
+      currentAction: null,
+      actions: ['讀書', '工作', '拖延', '耍廢', '睡覺']
     }
   }
 
   record(records, date, duration, action) {
-    const target = records.doc('date');
+    const target = records.doc(String(date));
     target.get().then(doc => {
+      let total = [null, ...this.state.actions].reduce((obj, item) => {obj[item]=0; return obj}, {});
+      let times = Object.assign({}, total);
       if (doc.exists) {
         let durations = doc.data().durations || [];
         let actions = doc.data().actions || [];
-        let total = doc.data()[action] || 0;
+        total = doc.data().total || total;
+        times = doc.data().times || times;
         durations.push(duration);
         actions.push(action);
-        total += duration;
+        total[action] += duration;
+        ++times[action];
         target.update({
           timeStamp: firebase.firestore.FieldValue.serverTimestamp(),
           durations: durations,
           actions: actions,
-          [action]: total
+          total: total,
+          times: times
         });
       }
       else {
+        total[action] = duration;
+        times[action] = 1;
         target.set({
           timeStamp: firebase.firestore.FieldValue.serverTimestamp(),
-          duractions: [duration],
+          date: date,
+          durations: [duration],
           actions: [action],
-          [action]: duration
+          total: total,
+          times: times
         });
       }
     })
@@ -129,7 +133,8 @@ class App extends React.Component {
 
         let d = getDay(new Date());
         const today = d.getTime();
-        d = getDay(d.setTime(start));
+        d.setTime(start);
+        d = getDay(d);
         let day = d.getTime();
         
         while (day < today) {
@@ -179,6 +184,7 @@ class App extends React.Component {
               render={props =>
               <Home
                 {...props}
+                actions={this.state.actions}
                 changeAction={a => this.changeAction(a)}
               />}
             />
